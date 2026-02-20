@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Private / working files
+feedback.md
+prompt.md
+scratch/
+
+# LLM / Claude Code configuration
+.claude/
+CLAUDE.md
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.bbl
+paper/*.blg
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+paper/*.pdf
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data artifacts (keep source data, exclude generated)
+data/*.csv
+data/*.pkl
+data/*.npy
+!data/*.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
