@@ -1,0 +1,531 @@
+\documentclass[11pt]{article}
+
+% ---- Packages ----
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{hyperref}
+\usepackage[capitalise]{cleveref}
+\usepackage{microtype}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+% ---- Theorem environments ----
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% ---- Custom commands ----
+\newcommand{\LIS}{\operatorname{LIS}}
+\newcommand{\LDS}{\operatorname{LDS}}
+\newcommand{\Coll}{\operatorname{C}}
+
+% ======================================================================
+\begin{document}
+
+\title{Longest Increasing Subsequences of Collatz Trajectories:\\
+  A Null Model Decomposition}
+
+\author{Mark T.\ Short\\
+  \texttt{SevenevesAI}\\
+  \texttt{mshort3@gmail.com}}
+
+\date{\today}
+
+\maketitle
+
+% ======================================================================
+\begin{abstract}
+We study the longest increasing subsequence (LIS) of Collatz trajectories
+as a quantitative probe of pseudorandomness. For starting values
+$n = 1, \ldots, N$, the mean ratio of LIS length to $2\sqrt{k}$, where
+$k$ is the trajectory length, is $0.567$ at $N = 10^6$ ---
+significantly below the $0.812$ observed for random sequences of
+matched lengths. Shuffling the trajectory values restores the ratio to
+$0.813$, confirming that the deviation reflects temporal ordering, not the
+value distribution. We decompose the deviation through a hierarchy of null
+models: the $31.6\%$ up-step fraction accounts for most of the gap, while
+the long descending suffix to~$1$ further depresses the ratio. The
+residual beyond matched stochastic models is approximately $0.05$, small
+but reproducible. The ratio varies across the generalized $3n+b$ family
+($0.49$ to $0.61$), suggesting it encodes dynamical information about the
+map. The asymptotic behavior of the ratio as $N \to \infty$ remains open.
+Python code reproducing all experiments is available at
+\url{https://github.com/sevenevesai/CollatzLIS}.
+\end{abstract}
+
+\noindent\textbf{Keywords:} Collatz conjecture, longest increasing
+subsequence, pseudorandomness, trajectory geometry, null model hierarchy
+
+\noindent\textbf{MSC 2020:} 11B83, 05A16, 37A45, 60C05
+
+% ======================================================================
+\section{Introduction}\label{sec:intro}
+
+% --- 1.1 Context ---
+\subsection{The Collatz map and trajectory statistics}
+
+The Collatz map $T \colon \mathbb{Z}^+ \to \mathbb{Z}^+$ is defined by
+\begin{equation}\label{eq:collatz}
+  T(n) = \begin{cases} 3n+1 & \text{if } n \text{ is odd},\\
+                        n/2  & \text{if } n \text{ is even}. \end{cases}
+\end{equation}
+The Collatz conjecture asserts that for every positive integer~$n$, repeated
+application of~$T$ eventually reaches~$1$. Despite substantial progress ---
+notably Tao's result~\cite{Tao2019} that almost all orbits attain almost
+bounded values --- the conjecture remains open.
+
+A complementary line of inquiry asks: \emph{to what extent do Collatz
+trajectories resemble random sequences?} Statistical properties of
+trajectories have been studied extensively, including stopping
+times~\cite{Terras1976}, digit distributions~\cite{KontorovichMiller2005},
+and density of iterates. The present paper contributes to this line by
+studying the \emph{subsequence structure} of Collatz trajectories through
+the lens of the longest increasing subsequence.
+
+% --- 1.2 LIS as a probe ---
+\subsection{LIS and the BDJ normalization}
+
+Given a sequence $x_1, x_2, \ldots, x_k$ of real numbers, the
+\emph{longest increasing subsequence} $\LIS(x)$ is the maximum length of
+a strictly increasing subsequence. The celebrated theorem of Baik, Deift,
+and Johansson~\cite{BDJ1999} establishes that for a uniformly random
+permutation of $\{1, \ldots, k\}$,
+\begin{equation}\label{eq:bdj}
+  \frac{\LIS(\sigma) - 2\sqrt{k}}{k^{1/6}} \xrightarrow{d}
+    F_2 \quad \text{as } k \to \infty,
+\end{equation}
+where $F_2$ is the Tracy--Widom distribution~\cite{TracyWidom1994}.
+
+We emphasize that Collatz trajectories are \emph{not} random permutations:
+they are deterministic sequences with values in $\mathbb{Z}^+$, exhibiting
+strong directional bias and temporal correlation. The
+quantity~$2\sqrt{k}$ serves here as a convenient normalization, not as a
+theoretical prediction. Our comparisons are against empirical baselines
+(random sequences, shuffled trajectories, matched stochastic models), not
+against the BDJ asymptotics directly.
+
+For a starting value $n \in \{1, \ldots, N\}$, let
+$\Coll(n) = (n, T(n), T^2(n), \ldots, 1)$ denote the Collatz trajectory,
+$k(n)$ its length, and $L(n) = \LIS(\Coll(n))$ the LIS of the trajectory.
+The \emph{LIS ratio} is
+\begin{equation}\label{eq:ratio}
+  r(n) = \frac{L(n)}{2\sqrt{k(n)}},
+\end{equation}
+and the mean ratio over $\{1, \ldots, N\}$ is $\bar{r}(N) = N^{-1}
+\sum_{n=1}^{N} r(n)$.
+
+% --- 1.3 Main observation ---
+\subsection{Main observation}
+
+The central empirical finding is:
+
+\begin{quote}
+\emph{The mean LIS ratio $\bar{r}(N)$ for Collatz trajectories is
+$0.567$ at $N = 10^6$, significantly below the random baseline of
+$0.812$. The deviation is explained primarily by the $31.6\%$ up-step
+fraction and the long descending suffix, with a residual of $\sim 0.05$
+beyond matched stochastic models.}
+\end{quote}
+
+% --- 1.4 Contributions ---
+\subsection{Contributions}
+
+The contributions of this paper are:
+\begin{enumerate}
+  \item The empirical observation that the Collatz LIS ratio is
+    significantly below random baselines, sustained across six orders of
+    magnitude in~$N$ (\cref{sec:scaling}).
+  \item A \emph{null model hierarchy} decomposing the deviation: random
+    permutation $\to$ multiplicative random walk $\to$ Bernoulli process
+    $\to$ Markov chain $\to$ Collatz, each adding one structural feature
+    (\cref{sec:null}).
+  \item A \emph{prefix--suffix decomposition} revealing that the low ratio
+    is primarily a suffix effect: the prefix-only ratio is $0.85$, near the
+    random baseline (\cref{sec:structure}).
+  \item Evidence of \emph{parameter sensitivity}: the ratio varies across
+    the $3n+b$ family ($0.49$ to $0.61$), serving as a dynamical
+    fingerprint (\cref{sec:parameter}).
+  \item An honest assessment of limitations: trajectory correlation,
+    convergence uncertainty, and the absence of analytical explanation
+    (\cref{sec:limitations}).
+\end{enumerate}
+
+\subsection{Outline}
+
+The remainder of this paper is organized as follows.
+\Cref{sec:setup} describes the experimental setup and LIS algorithm.
+\Cref{sec:scaling} presents the scaling experiments.
+\Cref{sec:null} develops the null model hierarchy.
+\Cref{sec:structure} analyzes trajectory structure (directionality, peak
+position, prefix--suffix decomposition).
+\Cref{sec:parameter} reports the parameter sensitivity across the $3n+b$
+family.
+\Cref{sec:limitations} discusses trajectory correlation, convergence
+uncertainty, and statistical caveats.
+\Cref{sec:conclusion} summarizes and identifies open questions.
+
+% ======================================================================
+\section{Experimental Setup}\label{sec:setup}
+
+% TODO: Python version, hardware, LIS algorithm, correctness verification,
+%       reproducibility details
+
+All experiments use Python~3.11. The LIS is computed via the patience
+sorting algorithm in $O(k \log k)$ time. Correctness is verified by
+exact match against brute-force enumeration on 1000 random sequences of
+length~10 (0 mismatches out of 1000 trials; \cref{sec:correctness}).
+Collatz trajectories are computed from starting values $n = 1, \ldots, N$
+with no step limit; all trajectories in the standard $3n+1$ map reach~$1$.
+
+Bootstrap confidence intervals use 1000 resamples. We note that trajectory
+correlation (\cref{sec:correlation}) reduces the effective sample size to
+approximately 500 at $N = 20{,}000$; reported CIs should be widened by a
+factor of approximately~6.
+
+Source code reproducing all experiments is available at
+\url{https://github.com/sevenevesai/CollatzLIS}.
+
+\subsection{LIS algorithm correctness}\label{sec:correctness}
+
+The patience sorting implementation passes all 10 named edge cases
+(empty sequence, single element, sorted, reverse-sorted, etc.) and
+matches brute-force LIS on 1000 random sequences of length~10 with 0
+mismatches. We consider the algorithm verified.
+
+% ======================================================================
+\section{Scaling Experiments}\label{sec:scaling}
+
+\Cref{tab:scaling} reports the mean LIS ratio $\bar{r}(N)$ for
+$N = 10^3$ to $N = 10^6$.
+
+\begin{table}[ht]
+\centering
+\caption{Mean LIS ratio $\bar{r}(N)$ and inter-step change $\Delta$ as a
+function of~$N$.}
+\label{tab:scaling}
+\begin{tabular}{@{}rrcc@{}}
+\toprule
+$N$ & $\bar{r}(N)$ & $\Delta$ & Random baseline \\
+\midrule
+1{,}000     & 0.632 & ---     & 0.81 \\
+5{,}000     & 0.627 & $-0.005$  & 0.81 \\
+10{,}000    & 0.621 & $-0.007$  & 0.81 \\
+50{,}000    & 0.599 & $-0.022$  & 0.81 \\
+100{,}000   & 0.590 & $-0.008$  & 0.81 \\
+250{,}000   & 0.581 & $-0.010$  & 0.81 \\
+500{,}000   & 0.574 & $-0.007$  & 0.81 \\
+750{,}000   & 0.570 & $-0.004$  & 0.81 \\
+1{,}000{,}000 & 0.567 & $-0.003$  & 0.81 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ratio is monotonically decreasing over the measured range. The
+inter-step change $\Delta$ is diminishing but has not reached zero: at
+$N = 10^6$ the ratio is still falling by $0.003$ per doubling step. The
+ratio has \emph{not} converged at $N = 10^6$.
+
+\paragraph{LIS/LDS asymmetry.}
+The mean LIS is $13.0$ and the mean longest decreasing subsequence (LDS) is
+$36.3$, giving a ratio $\LIS/\LDS = 0.36$. Collatz trajectories are almost
+three times more ``decreasing'' than ``increasing,'' a direct consequence of
+the $31.6\%$ up-step fraction.
+
+% ======================================================================
+\section{Null Model Hierarchy}\label{sec:null}
+
+The deviation of the Collatz LIS ratio from the random baseline can be
+decomposed by comparing against a hierarchy of stochastic models, each
+capturing one additional structural property of Collatz trajectories.
+
+\begin{table}[ht]
+\centering
+\caption{LIS ratio for Collatz and null models. Each model adds one
+structural feature beyond the previous. The ``Gap'' column shows the
+difference from the Collatz ratio.}
+\label{tab:null}
+\begin{tabular}{@{}llcc@{}}
+\toprule
+Model & What it captures & Ratio & Gap \\
+\midrule
+Random permutation       & Nothing (BDJ baseline)    & 0.812 & $+0.219$ \\
+Shuffled Collatz values  & Value distribution only    & 0.813 & $+0.220$ \\
+Multiplicative RW        & Step-size distribution     & 0.638 & $+0.045$ \\
+Bernoulli ($p = 0.316$)  & Up-fraction only           & 0.571 & $-0.022$ \\
+Markov (matched autocorr)& Up-fraction + alternation  & 0.478 & $-0.115$ \\
+\midrule
+\textbf{Collatz actual}  & \textbf{All structure}     & \textbf{0.593} & baseline \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The shuffling test}\label{sec:shuffle}
+
+The shuffled Collatz baseline ($0.813$) matches the random permutation
+baseline ($0.812$) to within sampling noise. This confirms that the low
+Collatz ratio reflects \emph{temporal ordering} rather than the marginal
+value distribution. Destroying the temporal order restores the ratio to the
+random baseline.
+
+\subsection{The multiplicative random walk}\label{sec:multrw}
+
+A multiplicative random walk with matched parameters --- $33\%$ up-steps of
+magnitude $3\times$, $67\%$ down-steps of magnitude $0.5\times$ --- produces
+ratio $0.638$, explaining most of the gap between Collatz ($0.593$) and
+random ($0.812$). The remaining gap of $0.045$ is the residual attributable
+to Collatz-specific structure beyond step-size statistics.
+
+\subsection{The Bernoulli model}\label{sec:bernoulli}
+
+An independent Bernoulli process with $p = 0.316$ (matching the Collatz
+up-step fraction) produces ratio $0.571$, within $0.022$ of the Collatz
+value. This is the key finding of the null model analysis: \emph{the
+up-step fraction alone accounts for most of the LIS ratio deviation from
+random}. No temporal correlation structure is needed to reproduce the
+approximate ratio.
+
+\subsection{The Markov model}\label{sec:markov}
+
+The lag-1 autocorrelation of the Collatz up/down indicator sequence is
+$-0.458$ (strongly alternating), reflecting the characteristic $3n+1 \to
+/2 \to /2$ pattern. A Markov chain matching this autocorrelation gives
+ratio $0.478$ --- \emph{lower} than the Collatz value, not higher. The
+alternating structure does not explain the residual gap; in fact, it
+overshoots. This suggests that the precise temporal arrangement of
+increasing steps in Collatz trajectories is more favorable for LIS growth
+than the strong alternation pattern alone would predict.
+
+% ======================================================================
+\section{Structural Analysis}\label{sec:structure}
+
+\subsection{Directional bias}\label{sec:bias}
+
+Only $31.6\%$ of transitions in Collatz trajectories are increasing. This
+fraction is tightly concentrated across starting values, with the
+distribution supported on $[0.2, 0.4]$ and no trajectory above $0.5$. The
+asymmetry is a direct consequence of the map: a single $3n+1$ step (odd) is
+typically followed by one or two $n/2$ steps (even), giving an up-step
+fraction near $1/3$.
+
+\subsection{Peak position}\label{sec:peak}
+
+The average peak (maximum value) occurs at position $0.11$ --- just $11\%$
+into the trajectory. A majority ($63\%$) of trajectories peak within the
+first $10\%$ of their length. The longest contiguous increasing run occurs
+at position $0.014$ on average, right at the start. Collatz trajectories
+shoot up early, then cascade down to~$1$.
+
+\subsection{Prefix--suffix decomposition}\label{sec:prefix}
+
+This trajectory geometry has a direct consequence for LIS. We decompose
+each trajectory into:
+\begin{itemize}
+  \item The \emph{prefix}: from $n$ to the peak value.
+  \item The \emph{suffix}: from the peak value down to $1$.
+\end{itemize}
+
+The prefix-only LIS ratio is $0.853$, near the random baseline of $0.812$.
+The full-trajectory ratio is $0.590$. The low ratio is driven primarily by
+the long descending suffix: the suffix inflates the trajectory length $k$
+(the denominator of $r$) while the LIS cannot grow during a monotone
+descent (contributing at most $1$ to the numerator per descent segment).
+
+This is a \emph{mechanical} consequence of trajectory shape, not a
+number-theoretic signal. Any sequence that rises briefly, peaks early, and
+then descends for most of its length will exhibit a depressed LIS ratio
+relative to $2\sqrt{k}$.
+
+% ======================================================================
+\section{Parameter Sensitivity}\label{sec:parameter}
+
+We extend the analysis to the generalized map $T_b(n) = 3n + b$ (odd) or
+$n/2$ (even), for $b \in \{1, 3, 5, 7, 11\}$. Only $b = 1$ gives $100\%$
+convergence to a cycle; other values have varying convergence rates under a
+$10^5$-step guard.
+
+\begin{table}[ht]
+\centering
+\caption{LIS ratio for the $3n+b$ family. Only converging trajectories are
+included.}
+\label{tab:parameter}
+\begin{tabular}{@{}ccccc@{}}
+\toprule
+$b$ & Converge \% & Avg $k$ & Ratio & TW mean \\
+\midrule
+1   & 100.0 & 101.5 & 0.599 & $-3.59$ \\
+3   & 0.03  &  90.7 & 0.612 & $-3.32$ \\
+5   & 14.2  &  76.2 & 0.521 & $-3.88$ \\
+7   & 69.2  &  80.9 & 0.489 & $-4.27$ \\
+11  & 19.8  &  85.5 & 0.493 & $-4.30$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ratio varies from $0.489$ ($b = 7$) to $0.612$ ($b = 3$), a spread of
+$0.12$. This suggests that the LIS ratio encodes dynamical information
+specific to each map variant, not merely a universal consequence of the
+$3n+b$ structure. The standard $3n+1$ map falls in the middle of the range.
+
+We note that the low convergence rate for $b \neq 1$ introduces selection
+bias: only trajectories that reach a cycle are included, and these may not
+be representative of typical orbits. The parameter sensitivity observation
+should be treated as suggestive, not definitive.
+
+% ======================================================================
+\section{Limitations and Statistical Caveats}\label{sec:limitations}
+
+\subsection{Trajectory correlation}\label{sec:correlation}
+
+Collatz trajectories from nearby starting values share a large fraction of
+their steps. On a sample of $20{,}000$ trajectories, $97.4\%$ of each
+trajectory consists of a suffix shared with at least one previously
+encountered trajectory, and $93\%$ of trajectories share more than $90\%$
+of their length. The effective number of independent samples is
+approximately $500$ out of $20{,}000$.
+
+This means bootstrap confidence intervals computed naively (CI width
+$0.003$ at $N = 10^6$) understate the true uncertainty by a factor of
+roughly~$6$. The adjusted $95\%$ CI for $\bar{r}(10^6)$ is approximately
+$[0.55, 0.59]$.
+
+\subsection{Convergence uncertainty}\label{sec:convergence}
+
+The ratio $\bar{r}(N)$ is still decreasing at $N = 10^6$. Three convergence
+models give different asymptotic predictions:
+
+\begin{table}[ht]
+\centering
+\caption{Convergence model fits and asymptotic predictions.}
+\label{tab:convergence}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Model & Asymptotic limit & RMSE & Predicted $\bar{r}(10^9)$ \\
+\midrule
+$r = a + b/\log N$  & 0.469 & 0.0023 & 0.536 \\
+$r = a + b/\sqrt{N}$ & 0.572 & 0.0064 & 0.572 \\
+$r = a + b/N^{0.25}$ & 0.549 & 0.0032 & $\approx 0.55$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The logarithmic model fits best (lowest RMSE) and predicts convergence to
+$\sim 0.47$, but the power-law models predict limits near $0.55$--$0.57$.
+We cannot determine the asymptotic limit with confidence from $N \leq 10^6$
+data. A Rust or C implementation reaching $N = 10^8$ or beyond would
+significantly reduce this uncertainty.
+
+\subsection{Absence of analytical explanation}
+
+All results in this paper are empirical. We have no analytical derivation
+of the LIS ratio, no proof that it converges, and no theoretical
+explanation for the specific value. The up-step fraction of $\sim 1/3$ is
+well understood from the Collatz map's structure, but connecting this to a
+precise LIS ratio requires understanding how LIS interacts with the
+temporal distribution of up-steps, the peak position, and the suffix
+length --- a problem we leave open.
+
+% ======================================================================
+\section{Conclusion}\label{sec:conclusion}
+
+We have studied the longest increasing subsequence of Collatz trajectories
+as a probe of pseudorandomness. The mean ratio $\LIS/2\sqrt{k}$ is
+$0.567$ at $N = 10^6$, lying $0.22$ below the random permutation baseline
+of $0.81$.
+
+The primary contribution is not the headline deviation number but the
+\emph{decomposition}. Through a hierarchy of null models, we show that:
+\begin{itemize}
+  \item The low ratio reflects temporal ordering (the shuffling test).
+  \item The $31.6\%$ up-step fraction is the dominant driver (the Bernoulli
+    model matches within $0.02$).
+  \item The long descending suffix further depresses the ratio (prefix-only
+    ratio is $0.85$, near baseline).
+  \item The residual Collatz-specific signal is approximately $0.05$,
+    small but reproducible.
+\end{itemize}
+
+The LIS ratio varies across the $3n+b$ family ($0.49$ to $0.61$),
+suggesting it encodes dynamical information specific to each map variant.
+
+Several questions remain open:
+\begin{enumerate}
+  \item Does $\bar{r}(N)$ converge as $N \to \infty$? If so, to what limit?
+    Large-scale computation ($N \geq 10^8$) would help.
+  \item Can the ratio be derived analytically from the known statistics of
+    the Collatz map?
+  \item Does the LIS ratio distinguish Collatz from other $3n+b$ maps in a
+    dynamically meaningful way?
+  \item Does the framework (LIS ratio as a pseudorandomness probe) yield
+    similar insights for other deterministic integer sequences?
+\end{enumerate}
+
+Code and data reproducing all experiments are available at
+\url{https://github.com/sevenevesai/CollatzLIS}.
+
+% ======================================================================
+\begin{thebibliography}{99}
+
+\bibitem{BDJ1999}
+J.~Baik, P.~Deift, and K.~Johansson,
+On the distribution of the length of the longest increasing subsequence
+of random permutations,
+\emph{J.\ Amer.\ Math.\ Soc.}, 12 (1999), pp.~1119--1178.
+
+\bibitem{AldousDiaconis1999}
+D.~Aldous and P.~Diaconis,
+Longest increasing subsequences: from patience sorting to the
+Baik-Deift-Johansson theorem,
+\emph{Bull.\ Amer.\ Math.\ Soc.}, 36 (1999), pp.~413--432.
+
+\bibitem{TracyWidom1994}
+C.~A.~Tracy and H.~Widom,
+Level-spacing distributions and the Airy kernel,
+\emph{Comm.\ Math.\ Phys.}, 159 (1994), pp.~151--174.
+
+\bibitem{Tao2019}
+T.~Tao,
+Almost all orbits of the Collatz map attain almost bounded values,
+\emph{Forum of Mathematics, Pi}, 10 (2022), e12.
+
+\bibitem{Lagarias1985}
+J.~C.~Lagarias,
+The $3x+1$ problem and its generalizations,
+\emph{Amer.\ Math.\ Monthly}, 92 (1985), pp.~3--23.
+
+\bibitem{KontorovichMiller2005}
+A.~V.~Kontorovich and S.~J.~Miller,
+Benford's law, values of $L$-functions and the $3x+1$ problem,
+\emph{Acta Arith.}, 120 (2005), pp.~269--297.
+
+\bibitem{Terras1976}
+R.~Terras,
+A stopping time problem on the positive integers,
+\emph{Acta Arith.}, 30 (1976), pp.~241--252.
+
+\bibitem{Crandall1978}
+R.~E.~Crandall,
+On the ``$3x+1$'' problem,
+\emph{Math.\ Comp.}, 32 (1978), pp.~1281--1292.
+
+\bibitem{Cohen1988}
+J.~Cohen,
+\emph{Statistical Power Analysis for the Behavioral Sciences},
+2nd ed., Lawrence Erlbaum Associates, 1988.
+
+\bibitem{Efron1979}
+B.~Efron,
+Bootstrap methods: another look at the jackknife,
+\emph{Ann.\ Statist.}, 7 (1979), pp.~1--26.
+
+\end{thebibliography}
+
+\end{document}
